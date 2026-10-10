@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIFA2RD - Sistema de Rifa</title>
+    <title>RIFA2RD - Sorteos Electrónicos</title>
     <!-- Firebase SDK (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --bg-dark: #0f1115;
-            --card-bg: #16191e;
-            --accent-yellow: #facc15;
-            --accent-hover: #eab308;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #27272a;
+            --bg-main: #0b0d10;
+            --card-bg: #14171d;
+            --yellow: #facc15;
+            --yellow-hover: #eab308;
+            --text-white: #ffffff;
+            --text-gray: #9ca3af;
+            --border: #22262e;
         }
 
         * {
@@ -26,176 +26,249 @@
         }
 
         body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            padding-bottom: 50px;
+            background-color: var(--bg-main);
+            color: var(--text-white);
+            padding-bottom: 60px;
         }
 
-        /* Header Navigation */
+        /* Navbar Superior */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 5%;
-            background: rgba(15, 17, 21, 0.9);
-            border-bottom: 1px solid var(--border-color);
+            padding: 15px 5%;
+            background: rgba(14, 16, 20, 0.95);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--accent-yellow);
-            letter-spacing: 1px;
-        }
-
-        .nav-btns {
+        .logo-container {
             display: flex;
+            align-items: center;
             gap: 10px;
         }
 
-        .nav-btn {
-            background: #27272a;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 20px;
+        .logo-box {
+            background: #1c2029;
+            border: 2px solid var(--yellow);
+            color: var(--yellow);
+            padding: 8px 12px;
+            font-weight: 900;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-nav {
+            background: #1c2029;
+            color: var(--text-white);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 30px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.9rem;
             transition: all 0.2s;
         }
 
-        .nav-btn.active, .nav-btn:hover {
-            background: var(--accent-yellow);
+        .btn-nav.active, .btn-nav:hover {
+            background: var(--yellow);
             color: #000;
+            border-color: var(--yellow);
         }
 
+        /* Contenedor Principal */
         .container {
-            max-width: 900px;
-            margin: 30px auto;
+            max-width: 1100px;
+            margin: 40px auto;
             padding: 0 20px;
         }
 
-        /* Card Rifa Principal */
         .section-title {
             font-size: 1.8rem;
-            margin-bottom: 20px;
-            font-weight: 800;
+            font-weight: 900;
+            margin-bottom: 25px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Tarjeta de Rifa */
+        .rifa-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
         }
 
         .rifa-card {
             background: var(--card-bg);
-            border: 2px solid var(--accent-yellow);
+            border: 2px solid var(--yellow);
             border-radius: 20px;
             overflow: hidden;
-            max-width: 450px;
-            margin: 0 auto;
-            box-shadow: 0 10px 25px rgba(250, 204, 21, 0.1);
+            box-shadow: 0 12px 30px rgba(250, 204, 21, 0.08);
+            display: flex;
+            flex-direction: column;
         }
 
-        .rifa-img {
+        .rifa-img-container {
+            position: relative;
             width: 100%;
-            height: 220px;
+            height: 210px;
+            background: #1f242d;
+        }
+
+        .rifa-img-container img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            background: #27272a;
         }
 
-        .rifa-content {
-            padding: 20px;
-        }
-
-        .badge-categoria {
-            background: var(--accent-yellow);
+        .badge-auto {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--yellow);
             color: #000;
-            font-weight: 800;
+            font-weight: 900;
             font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 12px;
-            display: inline-block;
-            margin-bottom: 10px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .rifa-body {
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .rifa-title {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 900;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .rifa-desc {
-            color: var(--text-muted);
+        .rifa-details {
+            color: var(--text-gray);
             font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 18px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
         }
 
-        .rifa-price {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--accent-yellow);
+        .price {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--yellow);
+        }
+
+        .min-tickets {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            font-weight: 600;
+        }
+
+        /* Barra de Progreso Estilo Captura */
+        .progress-container {
+            background: #1c2029;
+            border-radius: 10px;
+            height: 10px;
+            width: 100%;
             margin-bottom: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar {
+            background: var(--yellow);
+            height: 100%;
+            width: 94%;
+            border-radius: 10px;
         }
 
         .btn-participar {
             width: 100%;
-            background: var(--accent-yellow);
+            background: var(--yellow);
             color: #000;
             border: none;
             padding: 14px;
-            font-size: 1.1rem;
+            border-radius: 30px;
             font-weight: 900;
-            border-radius: 25px;
+            font-size: 1rem;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
+            margin-top: auto;
         }
 
         .btn-participar:hover {
-            background: var(--accent-hover);
+            background: var(--yellow-hover);
             transform: scale(1.02);
         }
 
-        /* Modal Seleccionar Paquete */
+        /* Modal de Paquetes Estilo Captura */
         .modal-overlay {
             display: none;
             position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.85);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
 
-        .modal-box {
+        .modal-card {
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border: 2px solid var(--yellow);
+            border-radius: 24px;
             width: 100%;
             max-width: 500px;
-            padding: 25px;
+            padding: 30px;
             position: relative;
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        .close-modal {
+        .modal-close {
             position: absolute;
-            top: 15px;
+            top: 20px;
             right: 20px;
-            background: #27272a;
+            background: #1c2029;
             color: #fff;
-            border: none;
+            border: 1px solid var(--border);
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 1rem;
         }
 
-        .package-option {
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
+        .modal-header-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .package-card {
+            background: #14171d;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
@@ -204,159 +277,206 @@
             transition: all 0.2s;
         }
 
-        .package-option:hover, .package-option.selected {
-            border-color: var(--accent-yellow);
-            background: rgba(250, 204, 21, 0.05);
+        .package-card:hover, .package-card.selected {
+            border-color: var(--yellow);
+            background: rgba(250, 204, 21, 0.03);
         }
 
-        .pkg-title {
-            font-weight: 800;
-            font-size: 1rem;
+        .pkg-name {
+            font-weight: 900;
+            font-size: 0.95rem;
+            margin-bottom: 3px;
         }
 
-        .pkg-stickers {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+        .pkg-amount {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
         .pkg-price {
+            font-size: 1.15rem;
             font-weight: 900;
-            color: var(--accent-yellow);
-            font-size: 1.1rem;
+            color: var(--yellow);
         }
 
         .form-input {
             width: 100%;
-            padding: 12px;
-            background: #0f1115;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 14px;
+            background: #0b0d10;
+            border: 1px solid var(--border);
+            border-radius: 12px;
             color: #fff;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
         }
 
-        /* Seccion Verificador */
-        .verificador-box {
+        .form-input:focus {
+            border-color: var(--yellow);
+            outline: none;
+        }
+
+        /* Sección Verificador de Stickers */
+        .verificador-container {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px 30px;
             text-align: center;
-            border: 1px solid var(--border-color);
+            max-width: 700px;
+            margin: 0 auto;
         }
 
-        .ticket-list {
-            margin-top: 20px;
+        .verificador-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .verificador-desc {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        .search-box-flex {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .tickets-result-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
+            margin-top: 25px;
         }
 
-        .ticket-badge {
-            background: var(--accent-yellow);
+        .ticket-pill {
+            background: var(--yellow);
             color: #000;
-            font-weight: 800;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            font-weight: 900;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(250, 204, 21, 0.2);
         }
     </style>
 </head>
 <body>
 
+    <!-- Header IDÉNTICO a la captura -->
     <header>
-        <div class="logo">RIFA2RD</div>
-        <div class="nav-btns">
-            <button class="nav-btn active" onclick="mostrarSeccion('rifas')">Ver rifas →</button>
-            <button class="nav-btn" onclick="mostrarSeccion('verificar')">Verificar sticker</button>
+        <div class="logo-container">
+            <div class="logo-box">RIFA2RD</div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-nav active" onclick="cambiarVista('rifas', this)">Ver rifas →</button>
+            <button class="btn-nav" onclick="cambiarVista('verificar', this)">Verificar sticker</button>
         </div>
     </header>
 
     <!-- Vista de Rifas -->
-    <div id="sec-rifas" class="container">
-        <h2 class="section-title">Todas las rifas</h2>
-        <div class="rifa-card">
-            <img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600" alt="Vehículos" class="rifa-img">
-            <div class="rifa-content">
-                <span class="badge-categoria">Autos</span>
-                <h3 class="rifa-title">2 VEHÍCULOS + 2 CROSS 🎁</h3>
-                <p class="rifa-desc">1. HILUX + KX112 | 2. CIVIC | 3. YAMAHA YZ85</p>
-                <div class="rifa-price">RD$100 / Sticker</div>
-                <button class="btn-participar" onclick="abrirModal()">Participar →</button>
+    <main id="vista-rifas" class="container">
+        <h1 class="section-title">Todas las rifas</h1>
+        <div class="rifa-grid">
+            <div class="rifa-card">
+                <div class="rifa-img-container">
+                    <span class="badge-auto">Autos</span>
+                    <img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600" alt="Vehículos">
+                </div>
+                <div class="rifa-body">
+                    <h3 class="rifa-title">2 VEHÍCULOS + 2 CROSS 🎁</h3>
+                    <p class="rifa-details">1. HILUX + KX112 | 2. CIVIC | 3. YAMAHA YZ85 | 2US CADA 🎟️</p>
+                    <div class="price-row">
+                        <span class="price">RD$100</span>
+                        <span class="min-tickets">Mín. 3</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <button class="btn-participar" onclick="abrirModalPaquetes()">Participar →</button>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Vista Verificador -->
-    <div id="sec-verificar" class="container" style="display: none;">
-        <div class="verificador-box">
-            <h2>Verificador de stickers</h2>
-            <p style="color: var(--text-muted); margin: 10px 0 20px;">Busca por teléfono (10 dígitos) para ver tus números asignados.</p>
-            <input type="tel" id="busqueda-tel" class="form-input" placeholder="Ej. 8091234567" style="max-width: 350px; display: inline-block;">
-            <button class="btn-participar" style="width: auto; padding: 12px 25px; margin-left: 10px;" onclick="buscarStickers()">Buscar</button>
-
-            <div id="resultado-busqueda" class="ticket-list"></div>
+    <main id="vista-verificar" class="container" style="display: none;">
+        <div class="verificador-container">
+            <h2 class="verificador-title">Verificador de stickers</h2>
+            <p class="verificador-desc">Busca por teléfono de 10 dígitos o por número de sticker.</p>
+            <div class="search-box-flex">
+                <input type="tel" id="input-busqueda" class="form-input" placeholder="Ej. 8091234567" style="margin-bottom:0;">
+                <button class="btn-participar" style="width: auto; padding: 0 25px;" onclick="ejecutarBusqueda()">Buscar</button>
+            </div>
+            <div id="resultado-stickers" class="tickets-result-grid"></div>
         </div>
-    </div>
+    </main>
 
-    <!-- Modal Elegir Paquete -->
+    <!-- Modal Paquetes IDÉNTICO a la segunda imagen -->
     <div id="modal-paquetes" class="modal-overlay">
-        <div class="modal-box">
-            <button class="close-modal" onclick="cerrarModal()">✕</button>
-            <h3 style="margin-bottom: 15px;">ELIGE TU PAQUETE</h3>
-            
-            <div class="package-option" onclick="seleccionarPaquete(3, 300, this)">
+        <div class="modal-card">
+            <button class="modal-close" onclick="cerrarModalPaquetes()">✕</button>
+            <div class="modal-header-title">ELIGE TU PAQUETE</div>
+
+            <div class="package-card" onclick="seleccionarPaq(3, 300, this)">
                 <div>
-                    <div class="pkg-title">AMATEUR</div>
-                    <div class="pkg-stickers">3 STICKERS</div>
+                    <div class="pkg-name">AMATEUR</div>
+                    <div class="pkg-amount">3 Stickers</div>
                 </div>
                 <div class="pkg-price">RD$300</div>
             </div>
 
-            <div class="package-option" onclick="seleccionarPaquete(5, 500, this)">
+            <div class="package-card" onclick="seleccionarPaq(5, 500, this)">
                 <div>
-                    <div class="pkg-title">PRO</div>
-                    <div class="pkg-stickers">5 STICKERS</div>
+                    <div class="pkg-name">PRO</div>
+                    <div class="pkg-amount">5 Stickers</div>
                 </div>
                 <div class="pkg-price">RD$500</div>
             </div>
 
-            <div class="package-option selected" onclick="seleccionarPaquete(10, 1000, this)">
+            <div class="package-card selected" onclick="seleccionarPaq(10, 1000, this)" style="border-color: var(--yellow);">
                 <div>
-                    <div class="pkg-title">ELITE (MEJOR OPCIÓN)</div>
-                    <div class="pkg-stickers">10 STICKERS</div>
+                    <div class="pkg-name">ELITE <span style="font-size:0.7rem; background:var(--yellow); color:#000; padding:2px 6px; border-radius:6px; margin-left:5px;">MEJOR OPCIÓN</span></div>
+                    <div class="pkg-amount">10 Stickers</div>
                 </div>
                 <div class="pkg-price">RD$1,000</div>
             </div>
 
-            <div class="package-option" onclick="seleccionarPaquete(25, 2500, this)">
+            <div class="package-card" onclick="seleccionarPaq(25, 2500, this)">
                 <div>
-                    <div class="pkg-title">CAMPEÓN</div>
-                    <div class="pkg-stickers">25 STICKERS</div>
+                    <div class="pkg-name">CAMPEÓN</div>
+                    <div class="pkg-amount">25 Stickers</div>
                 </div>
                 <div class="pkg-price">RD$2,500</div>
             </div>
 
-            <div class="package-option" onclick="seleccionarPaquete(50, 5000, this)">
+            <div class="package-card" onclick="seleccionarPaq(50, 5000, this)">
                 <div>
-                    <div class="pkg-title">LEYENDA (VIP)</div>
-                    <div class="pkg-stickers">50 STICKERS</div>
+                    <div class="pkg-name">LEYENDA <span style="font-size:0.7rem; background:#3b82f6; color:#fff; padding:2px 6px; border-radius:6px; margin-left:5px;">VIP</span></div>
+                    <div class="pkg-amount">50 Stickers</div>
                 </div>
                 <div class="pkg-price">RD$5,000</div>
             </div>
 
-            <hr style="border-color: var(--border-color); margin: 20px 0;">
+            <hr style="border-color: var(--border); margin: 20px 0;">
 
-            <form id="form-compra">
-                <input type="text" id="nombre" class="form-input" placeholder="Nombre completo" required>
-                <input type="tel" id="telefono" class="form-input" placeholder="Teléfono / WhatsApp (10 dígitos)" required>
-                <button type="submit" class="btn-participar" id="btn-comprar">Comprar Paquete</button>
+            <form id="form-registro-rifa">
+                <input type="text" id="nombre-cliente" class="form-input" placeholder="Nombre completo" required>
+                <input type="tel" id="tel-cliente" class="form-input" placeholder="Teléfono / WhatsApp (10 dígitos)" required>
+                <button type="submit" class="btn-participar" id="btn-procesar">Comprar Paquete</button>
             </form>
         </div>
     </div>
 
     <script>
-        // Firebase Config
+        // Configuración Firebase Realtime Database
         const firebaseConfig = {
             apiKey: "AIzaSyAMPBDfxYr6sqa1u0UimHCqZLqh8QysqQY",
             authDomain: "rifa-bb67f.firebaseapp.com",
@@ -371,59 +491,61 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let paqueteSeleccionado = { cantidad: 10, precio: 1000 };
+        let paqueteActual = { cantidad: 10, precio: 1000 };
 
-        function mostrarSeccion(sec) {
-            document.getElementById('sec-rifas').style.display = sec === 'rifas' ? 'block' : 'none';
-            document.getElementById('sec-verificar').style.display = sec === 'verificar' ? 'block' : 'none';
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+        function cambiarVista(vista, btn) {
+            document.getElementById('vista-rifas').style.display = vista === 'rifas' ? 'block' : 'none';
+            document.getElementById('vista-verificar').style.display = vista === 'verificar' ? 'block' : 'none';
+            document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
 
-        function abrirModal() { document.getElementById('modal-paquetes').style.display = 'flex'; }
-        function cerrarModal() { document.getElementById('modal-paquetes').style.display = 'none'; }
-
-        function seleccionarPaquete(cant, precio, el) {
-            paqueteSeleccionado = { cantidad: cant, precio: precio };
-            document.querySelectorAll('.package-option').forEach(opt => opt.classList.remove('selected'));
-            el.classList.add('selected');
+        function abrirModalPaquetes() {
+            document.getElementById('modal-paquetes').style.display = 'flex';
         }
 
-        // Generador de números automáticos de 5 dígitos (00000 - 99999)
-        async function generarNumerosUnicos(cantidad) {
+        function cerrarModalPaquetes() {
+            document.getElementById('modal-paquetes').style.display = 'none';
+        }
+
+        function seleccionarPaq(cant, precio, el) {
+            paqueteActual = { cantidad: cant, precio: precio };
+            document.querySelectorAll('.package-card').forEach(c => c.style.borderColor = 'var(--border)');
+            el.style.borderColor = 'var(--yellow)';
+        }
+
+        // Generador automático de combinaciones únicas de 5 dígitos (00000 - 99999) sin repetir
+        async function generarStickersUnicos(cantidad) {
             const snapshot = await db.ref('boletos').once('value');
-            const boletosExistentes = snapshot.val() || {};
-            const nuevosNumeros = [];
+            const registrados = snapshot.val() || {};
+            const nuevos = [];
 
-            while (nuevosNumeros.length < cantidad) {
-                // Genera número aleatorio de 5 dígitos entre 0 y 99999
-                const numRnd = Math.floor(Math.random() * 100000);
-                const num5Digitos = String(numRnd).padStart(5, '0');
+            while (nuevos.length < cantidad) {
+                const randomNum = Math.floor(Math.random() * 100000);
+                const codigo5Digitos = String(randomNum).padStart(5, '0');
 
-                // Verifica que no exista en DB ni en el arreglo actual
-                if (!boletosExistentes[num5Digitos] && !nuevosNumeros.includes(num5Digitos)) {
-                    nuevosNumeros.push(num5Digitos);
+                if (!registrados[codigo5Digitos] && !nuevos.includes(codigo5Digitos)) {
+                    nuevos.push(codigo5Digitos);
                 }
             }
-            return nuevosNumeros;
+            return nuevos;
         }
 
-        document.getElementById('form-compra').onsubmit = async (e) => {
+        document.getElementById('form-registro-rifa').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btn-comprar');
+            const btn = document.getElementById('btn-procesar');
             btn.disabled = true;
-            btn.textContent = "Generando tus stickers...";
+            btn.textContent = "Generando tus números...";
 
-            const nombre = document.getElementById('nombre').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
+            const nombre = document.getElementById('nombre-cliente').value.trim();
+            const telefono = document.getElementById('tel-cliente').value.trim();
 
             try {
-                const numerosAsignados = await generarNumerosUnicos(paqueteSeleccionado.cantidad);
+                const stickersAsignados = await generarStickersUnicos(paqueteActual.cantidad);
                 
-                // Guardar en Firebase
                 const updates = {};
-                numerosAsignados.forEach(num => {
-                    updates[`boletos/${num}`] = {
+                stickersAsignados.forEach(stick => {
+                    updates[`boletos/${stick}`] = {
                         nombre: nombre,
                         telefono: telefono,
                         fecha: Date.now()
@@ -432,43 +554,43 @@
 
                 await db.ref().update(updates);
 
-                alert(`¡Felicidades ${nombre}!\nSe han generado tus ${paqueteSeleccionado.cantidad} stickers:\n\n${numerosAsignados.join(', ')}`);
+                alert(`¡Compra Exitosa, ${nombre}!\nTus stickers generados de 5 dígitos son:\n\n${stickersAsignados.join(', ')}`);
                 
-                cerrarModal();
-                document.getElementById('form-compra').reset();
+                cerrarModalPaquetes();
+                document.getElementById('form-registro-rifa').reset();
             } catch (err) {
-                alert("Error al procesar la compra: " + err.message);
+                alert("Error al registrar los números: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Comprar Paquete";
             }
         };
 
-        // Buscar Stickers del Usuario
-        async function buscarStickers() {
-            const tel = document.getElementById('busqueda-tel').value.trim();
-            const resDiv = document.getElementById('resultado-busqueda');
-            resDiv.innerHTML = 'Buscando...';
+        // Verificador de stickers por teléfono
+        async function ejecutarBusqueda() {
+            const valor = document.getElementById('input-busqueda').value.trim();
+            const contenedor = document.getElementById('resultado-stickers');
+            contenedor.innerHTML = '<p style="color:var(--text-gray);">Buscando en la base de datos...</p>';
 
-            if(!tel) {
-                resDiv.innerHTML = 'Ingresa un número de teléfono válido.';
+            if (!valor) {
+                contenedor.innerHTML = '<p style="color:#ef4444;">Por favor introduce un número de teléfono.</p>';
                 return;
             }
 
             const snapshot = await db.ref('boletos').once('value');
-            const boletos = snapshot.val() || {};
+            const todos = snapshot.val() || {};
             const encontrados = [];
 
-            for (let num in boletos) {
-                if (boletos[num].telefono === tel) {
-                    encontrados.push(num);
+            for (let codigo in todos) {
+                if (codigo === valor || todos[codigo].telefono === valor) {
+                    encontrados.push(codigo);
                 }
             }
 
             if (encontrados.length > 0) {
-                resDiv.innerHTML = encontrados.map(n => `<div class="ticket-badge">Sticker #${n}</div>`).join('');
+                contenedor.innerHTML = encontrados.map(n => `<div class="ticket-pill">#${n}</div>`).join('');
             } else {
-                resDiv.innerHTML = '<p style="color:var(--text-muted)">No se encontraron stickers asociados a este teléfono.</p>';
+                contenedor.innerHTML = '<p style="color:var(--text-gray);">No se encontraron stickers asociados a este dato.</p>';
             }
         }
     </script>
