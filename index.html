@@ -3,185 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rifa Electrónica Oficial</title>
+    <title>RIFA2RD - Sistema de Rifa</title>
     <!-- Firebase SDK (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
+            --bg-dark: #0f1115;
+            --card-bg: #16191e;
+            --accent-yellow: #facc15;
+            --accent-hover: #eab308;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #27272a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: #1e293b;
-            margin: 0;
-            padding: 20px;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding-bottom: 50px;
         }
 
+        /* Header Navigation */
         header {
-            text-align: center;
-            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: rgba(15, 17, 21, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-yellow);
+            letter-spacing: 1px;
+        }
+
+        .nav-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: #27272a;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background: var(--accent-yellow);
+            color: #000;
         }
 
         .container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
+        /* Card Rifa Principal */
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 800;
         }
 
-        .panel {
+        .rifa-card {
             background: var(--card-bg);
+            border: 2px solid var(--accent-yellow);
+            border-radius: 20px;
+            overflow: hidden;
+            max-width: 450px;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(250, 204, 21, 0.1);
+        }
+
+        .rifa-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: #27272a;
+        }
+
+        .rifa-content {
             padding: 20px;
+        }
+
+        .badge-categoria {
+            background: var(--accent-yellow);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.75rem;
+            padding: 4px 10px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            display: inline-block;
+            margin-bottom: 10px;
         }
 
-        .grid-boletos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+        .rifa-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 8px;
         }
 
-        .ticket {
-            background: #e2e8f0;
+        .rifa-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .rifa-price {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+        }
+
+        .btn-participar {
+            width: 100%;
+            background: var(--accent-yellow);
+            color: #000;
             border: none;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-participar:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        /* Modal Seleccionar Paquete */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #27272a;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
             font-weight: bold;
+        }
+
+        .package-option {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .ticket:hover:not(:disabled) {
-            background: #cbd5e1;
+        .package-option:hover, .package-option.selected {
+            border-color: var(--accent-yellow);
+            background: rgba(250, 204, 21, 0.05);
         }
 
-        .ticket.disponible {
-            background: #dcfce7;
-            color: #166534;
+        .pkg-title {
+            font-weight: 800;
+            font-size: 1rem;
         }
 
-        .ticket.seleccionado {
-            background: var(--primary);
-            color: white;
+        .pkg-stickers {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
 
-        .ticket.ocupado {
-            background: #fee2e2;
-            color: #991b1b;
-            cursor: not-allowed;
+        .pkg-price {
+            font-weight: 900;
+            color: var(--accent-yellow);
+            font-size: 1.1rem;
         }
 
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
+        .form-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        .ticket-tag {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        button[type="submit"] {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
             padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
+            background: #0f1115;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #fff;
+            margin-bottom: 12px;
         }
 
-        button[type="submit"]:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
+        /* Seccion Verificador */
+        .verificador-box {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid var(--border-color);
         }
 
-        .search-box input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            box-sizing: border-box;
+        .ticket-list {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .ticket-badge {
+            background: var(--accent-yellow);
+            color: #000;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
+
     <header>
-        <h1>Gran Rifa Electrónica</h1>
-        <p>Selecciona tu número de la suerte y participa.</p>
+        <div class="logo">RIFA2RD</div>
+        <div class="nav-btns">
+            <button class="nav-btn active" onclick="mostrarSeccion('rifas')">Ver rifas →</button>
+            <button class="nav-btn" onclick="mostrarSeccion('verificar')">Verificar sticker</button>
+        </div>
     </header>
 
-    <main class="container">
-        <section class="panel">
-            <h2>1. Elige tu número</h2>
-            <div class="search-box">
-                <input type="text" id="buscador" placeholder="Buscar número...">
+    <!-- Vista de Rifas -->
+    <div id="sec-rifas" class="container">
+        <h2 class="section-title">Todas las rifas</h2>
+        <div class="rifa-card">
+            <img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600" alt="Vehículos" class="rifa-img">
+            <div class="rifa-content">
+                <span class="badge-categoria">Autos</span>
+                <h3 class="rifa-title">2 VEHÍCULOS + 2 CROSS 🎁</h3>
+                <p class="rifa-desc">1. HILUX + KX112 | 2. CIVIC | 3. YAMAHA YZ85</p>
+                <div class="rifa-price">RD$100 / Sticker</div>
+                <button class="btn-participar" onclick="abrirModal()">Participar →</button>
             </div>
-            <div id="grid-boletos" class="grid-boletos">
-                <!-- Los boletos se generan dinámicamente -->
-            </div>
-        </section>
+        </div>
+    </div>
 
-        <section class="panel formulario-panel">
-            <h2>2. Completa tus datos</h2>
-            <form id="form-ticket">
-                <input type="hidden" id="selected-ticket" required>
-                <div class="input-group">
-                    <label>Número Seleccionado:</label>
-                    <span id="display-ticket" class="ticket-tag">Ninguno</span>
+    <!-- Vista Verificador -->
+    <div id="sec-verificar" class="container" style="display: none;">
+        <div class="verificador-box">
+            <h2>Verificador de stickers</h2>
+            <p style="color: var(--text-muted); margin: 10px 0 20px;">Busca por teléfono (10 dígitos) para ver tus números asignados.</p>
+            <input type="tel" id="busqueda-tel" class="form-input" placeholder="Ej. 8091234567" style="max-width: 350px; display: inline-block;">
+            <button class="btn-participar" style="width: auto; padding: 12px 25px; margin-left: 10px;" onclick="buscarStickers()">Buscar</button>
+
+            <div id="resultado-busqueda" class="ticket-list"></div>
+        </div>
+    </div>
+
+    <!-- Modal Elegir Paquete -->
+    <div id="modal-paquetes" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-modal" onclick="cerrarModal()">✕</button>
+            <h3 style="margin-bottom: 15px;">ELIGE TU PAQUETE</h3>
+            
+            <div class="package-option" onclick="seleccionarPaquete(3, 300, this)">
+                <div>
+                    <div class="pkg-title">AMATEUR</div>
+                    <div class="pkg-stickers">3 STICKERS</div>
                 </div>
-                <div class="input-group">
-                    <label for="nombre">Nombre Completo:</label>
-                    <input type="text" id="nombre" required placeholder="Ej. Juan Pérez">
+                <div class="pkg-price">RD$300</div>
+            </div>
+
+            <div class="package-option" onclick="seleccionarPaquete(5, 500, this)">
+                <div>
+                    <div class="pkg-title">PRO</div>
+                    <div class="pkg-stickers">5 STICKERS</div>
                 </div>
-                <div class="input-group">
-                    <label for="telefono">Teléfono / WhatsApp:</label>
-                    <input type="tel" id="telefono" required placeholder="Ej. 809-000-0000">
+                <div class="pkg-price">RD$500</div>
+            </div>
+
+            <div class="package-option selected" onclick="seleccionarPaquete(10, 1000, this)">
+                <div>
+                    <div class="pkg-title">ELITE (MEJOR OPCIÓN)</div>
+                    <div class="pkg-stickers">10 STICKERS</div>
                 </div>
-                <button type="submit" id="btn-reservar" disabled>Apartar Número</button>
+                <div class="pkg-price">RD$1,000</div>
+            </div>
+
+            <div class="package-option" onclick="seleccionarPaquete(25, 2500, this)">
+                <div>
+                    <div class="pkg-title">CAMPEÓN</div>
+                    <div class="pkg-stickers">25 STICKERS</div>
+                </div>
+                <div class="pkg-price">RD$2,500</div>
+            </div>
+
+            <div class="package-option" onclick="seleccionarPaquete(50, 5000, this)">
+                <div>
+                    <div class="pkg-title">LEYENDA (VIP)</div>
+                    <div class="pkg-stickers">50 STICKERS</div>
+                </div>
+                <div class="pkg-price">RD$5,000</div>
+            </div>
+
+            <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+            <form id="form-compra">
+                <input type="text" id="nombre" class="form-input" placeholder="Nombre completo" required>
+                <input type="tel" id="telefono" class="form-input" placeholder="Teléfono / WhatsApp (10 dígitos)" required>
+                <button type="submit" class="btn-participar" id="btn-comprar">Comprar Paquete</button>
             </form>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <script>
-        // Configuración de Firebase integrada con tus credenciales reales
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAMPBDfxYr6sqa1u0UimHCqZLqh8QysqQY",
             authDomain: "rifa-bb67f.firebaseapp.com",
@@ -196,97 +371,106 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const TOTAL_BOLETOS = 100; 
-        let numeroSeleccionado = null;
+        let paqueteSeleccionado = { cantidad: 10, precio: 1000 };
 
-        const gridBoletos = document.getElementById('grid-boletos');
-        const selectedInput = document.getElementById('selected-ticket');
-        const displayTicket = document.getElementById('display-ticket');
-        const btnReservar = document.getElementById('btn-reservar');
-        const formTicket = document.getElementById('form-ticket');
-        const buscador = document.getElementById('buscador');
+        function mostrarSeccion(sec) {
+            document.getElementById('sec-rifas').style.display = sec === 'rifas' ? 'block' : 'none';
+            document.getElementById('sec-verificar').style.display = sec === 'verificar' ? 'block' : 'none';
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
 
-        function inicializarRifa() {
-            gridBoletos.innerHTML = '';
-            
-            db.ref('boletos').on('value', (snapshot) => {
-                const datosBoletos = snapshot.val() || {};
-                gridBoletos.innerHTML = '';
+        function abrirModal() { document.getElementById('modal-paquetes').style.display = 'flex'; }
+        function cerrarModal() { document.getElementById('modal-paquetes').style.display = 'none'; }
 
-                for (let i = 0; i < TOTAL_BOLETOS; i++) {
-                    const numeroStr = String(i).padStart(3, '0');
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'ticket';
-                    btn.textContent = numeroStr;
+        function seleccionarPaquete(cant, precio, el) {
+            paqueteSeleccionado = { cantidad: cant, precio: precio };
+            document.querySelectorAll('.package-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
 
-                    if (datosBoletos[numeroStr]) {
-                        btn.classList.add('ocupado');
-                        btn.disabled = true;
-                        btn.title = `Ocupado por ${datosBoletos[numeroStr].nombre}`;
-                    } else {
-                        btn.classList.add('disponible');
-                        btn.onclick = () => seleccionarBoleto(numeroStr, btn);
-                    }
+        // Generador de números automáticos de 5 dígitos (00000 - 99999)
+        async function generarNumerosUnicos(cantidad) {
+            const snapshot = await db.ref('boletos').once('value');
+            const boletosExistentes = snapshot.val() || {};
+            const nuevosNumeros = [];
 
-                    gridBoletos.appendChild(btn);
+            while (nuevosNumeros.length < cantidad) {
+                // Genera número aleatorio de 5 dígitos entre 0 y 99999
+                const numRnd = Math.floor(Math.random() * 100000);
+                const num5Digitos = String(numRnd).padStart(5, '0');
+
+                // Verifica que no exista en DB ni en el arreglo actual
+                if (!boletosExistentes[num5Digitos] && !nuevosNumeros.includes(num5Digitos)) {
+                    nuevosNumeros.push(num5Digitos);
                 }
-            });
+            }
+            return nuevosNumeros;
         }
 
-        function seleccionarBoleto(numero, elemento) {
-            document.querySelectorAll('.ticket').forEach(t => {
-                if(!t.classList.contains('ocupado')) t.classList.remove('seleccionado');
-            });
-            
-            elemento.classList.add('seleccionado');
-            numeroSeleccionado = numero;
-            selectedInput.value = numero;
-            displayTicket.textContent = `#${numero}`;
-            btnReservar.disabled = false;
-        }
-
-        formTicket.onsubmit = (e) => {
+        document.getElementById('form-compra').onsubmit = async (e) => {
             e.preventDefault();
-            if (!numeroSeleccionado) return;
+            const btn = document.getElementById('btn-comprar');
+            btn.disabled = true;
+            btn.textContent = "Generando tus stickers...";
 
             const nombre = document.getElementById('nombre').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
-            const boletoRef = db.ref(`boletos/${numeroSeleccionado}`);
-            
-            boletoRef.transaction((currentData) => {
-                if (currentData === null) {
-                    return { nombre, telefono, fecha: Date.now() };
-                } else {
-                    return; 
-                }
-            }, (error, committed) => {
-                if (error) {
-                    alert("Error al procesar la reserva. Intente de nuevo.");
-                } else if (!committed) {
-                    alert("¡Lo siento! Este número acaba de ser seleccionado por otra persona.");
-                } else {
-                    alert(`¡Boleto #${numeroSeleccionado} apartado con éxito!`);
-                    formTicket.reset();
-                    displayTicket.textContent = "Ninguno";
-                    btnReservar.disabled = true;
-                    numeroSeleccionado = null;
-                }
-            });
+
+            try {
+                const numerosAsignados = await generarNumerosUnicos(paqueteSeleccionado.cantidad);
+                
+                // Guardar en Firebase
+                const updates = {};
+                numerosAsignados.forEach(num => {
+                    updates[`boletos/${num}`] = {
+                        nombre: nombre,
+                        telefono: telefono,
+                        fecha: Date.now()
+                    };
+                });
+
+                await db.ref().update(updates);
+
+                alert(`¡Felicidades ${nombre}!\nSe han generado tus ${paqueteSeleccionado.cantidad} stickers:\n\n${numerosAsignados.join(', ')}`);
+                
+                cerrarModal();
+                document.getElementById('form-compra').reset();
+            } catch (err) {
+                alert("Error al procesar la compra: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Comprar Paquete";
+            }
         };
 
-        buscador.oninput = (e) => {
-            TheFiltro = e.target.value;
-            document.querySelectorAll('.ticket').forEach(btn => {
-                if (btn.textContent.includes(e.target.value)) {
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                }
-            });
-        };
+        // Buscar Stickers del Usuario
+        async function buscarStickers() {
+            const tel = document.getElementById('busqueda-tel').value.trim();
+            const resDiv = document.getElementById('resultado-busqueda');
+            resDiv.innerHTML = 'Buscando...';
 
-        window.onload = inicializarRifa;
+            if(!tel) {
+                resDiv.innerHTML = 'Ingresa un número de teléfono válido.';
+                return;
+            }
+
+            const snapshot = await db.ref('boletos').once('value');
+            const boletos = snapshot.val() || {};
+            const encontrados = [];
+
+            for (let num in boletos) {
+                if (boletos[num].telefono === tel) {
+                    encontrados.push(num);
+                }
+            }
+
+            if (encontrados.length > 0) {
+                resDiv.innerHTML = encontrados.map(n => `<div class="ticket-badge">Sticker #${n}</div>`).join('');
+            } else {
+                resDiv.innerHTML = '<p style="color:var(--text-muted)">No se encontraron stickers asociados a este teléfono.</p>';
+            }
+        }
     </script>
 </body>
 </html>
