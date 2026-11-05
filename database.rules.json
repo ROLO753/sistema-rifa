@@ -3,22 +3,28 @@
     "rifas": {
       "activa": {
         ".read": true,
-        ".write": "auth != null && auth.uid === 'b7SQ4D56L1amlycuGInM8mraKPA3'",
-        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'activa', 'actualizado']) && newData.numChildren() === 9 && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('activa').val() === true && newData.child('actualizado').isNumber()",
+        ".write": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
+        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('activa').val() == true && newData.child('actualizado').isNumber()",
         "paquetes": {
           "$index": {
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
           }
+        },
+        "$other": {
+          ".validate": false
         }
       },
       "borrador": {
-        ".read": "auth != null && auth.uid === 'b7SQ4D56L1amlycuGInM8mraKPA3'",
-        ".write": "auth != null && auth.uid === 'b7SQ4D56L1amlycuGInM8mraKPA3'",
-        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'activa', 'actualizado']) && newData.numChildren() === 9 && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('activa').isBoolean() && newData.child('actualizado').isNumber()",
+        ".read": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
+        ".write": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
+        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('activa').isBoolean() && newData.child('actualizado').isNumber()",
         "paquetes": {
           "$index": {
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
           }
+        },
+        "$other": {
+          ".validate": false
         }
       }
     },
