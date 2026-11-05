@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10091e">
     <title>Administración | RIFA2RD</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root {
             color-scheme: dark;
@@ -385,6 +388,90 @@
             font-size: 2rem;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
+        .auth-panel {
+            width: min(460px, 100%);
+            margin: 28px auto;
+            padding: clamp(22px, 5vw, 34px);
+        }
+
+        .auth-panel h2 {
+            margin-bottom: 8px;
+            font-size: 1.45rem;
+        }
+
+        .auth-panel > p {
+            margin-bottom: 22px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .auth-panel .field {
+            margin-bottom: 15px;
+        }
+
+        .auth-error,
+        .admin-status {
+            min-height: 1.4em;
+            margin: 12px 0;
+            color: #ff9aaf;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .admin-status.success {
+            color: #8af0c5;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sign-out-button,
+        .secondary-button {
+            min-height: 42px;
+            padding: 9px 14px;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+            font: inherit;
+            font-weight: 750;
+            cursor: pointer;
+        }
+
+        .sign-out-button:hover,
+        .secondary-button:hover {
+            border-color: var(--cyan);
+        }
+
+        .editor-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .publish-button {
+            color: #130d22;
+            background: linear-gradient(100deg, #72f5c2, #45e6ff);
+            box-shadow: 0 0 22px rgba(69, 230, 255, 0.16);
+        }
+
+        .publish-button:hover {
+            box-shadow: 0 0 30px rgba(69, 230, 255, 0.3);
+        }
+
+        .preview-button:disabled,
+        .sign-out-button:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
         @media (max-width: 820px) {
             main {
                 margin-top: 30px;
@@ -429,7 +516,10 @@
             <span class="brand-mark">RIFA2RD</span>
             <span>Administración</span>
         </div>
-        <a class="back-link" href="./">← Volver a la página</a>
+        <div class="header-actions">
+            <a class="back-link" href="./">← Volver a la página</a>
+            <button class="sign-out-button" id="sign-out" type="button" hidden>Cerrar sesión</button>
+        </div>
     </header>
 
     <main>
@@ -439,19 +529,39 @@
             <p>Organiza los premios, los detalles y los paquetes desde un solo lugar.</p>
         </section>
 
-        <aside class="preview-notice" aria-label="Aviso de vista previa">
-            <span class="notice-icon" aria-hidden="true">⚠️</span>
-            <div>
-                <strong>Vista previa: Firebase aún no está conectado</strong>
-                Puedes probar cómo se verá una rifa, pero los cambios no se guardan ni se publican. La conexión y el acceso seguro se configurarán con tu nuevo proyecto Firebase.
-            </div>
-        </aside>
+        <section class="panel auth-panel" id="login-panel" aria-labelledby="login-title">
+            <h2 id="login-title">Acceso de administrador</h2>
+            <p>Inicia sesión con el correo y la contraseña que registraste en Firebase Authentication.</p>
+            <form id="login-form">
+                <div class="field">
+                    <label for="login-email">Correo electrónico</label>
+                    <input id="login-email" name="login-email" type="email" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label for="login-password">Contraseña</label>
+                    <input id="login-password" name="login-password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="preview-button" id="login-button" type="submit">Entrar al panel</button>
+                <button class="secondary-button" id="reset-password" type="button" style="width:100%;margin-top:10px;">Enviar enlace para restablecer contraseña</button>
+                <p class="auth-error" id="login-error" role="status" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section id="admin-content" hidden>
+            <aside class="preview-notice" aria-label="Aviso de publicación">
+                <span class="notice-icon" aria-hidden="true">🔒</span>
+                <div>
+                    <strong>Panel conectado a RIFADISTIN</strong>
+                    Guarda una rifa como borrador o publícala para mostrarla en la página principal. El acceso a los datos también está protegido por las reglas de Realtime Database.
+                </div>
+            </aside>
+            <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
 
         <div class="admin-grid">
             <section class="panel editor" aria-labelledby="editor-title">
                 <div class="section-heading">
                     <h2 id="editor-title">Datos de la rifa</h2>
-                    <p>Completa la información y genera una vista previa.</p>
+                    <p>Completa la información y guarda el borrador o publícala.</p>
                 </div>
 
                 <form id="form-rifa">
@@ -499,8 +609,12 @@
                         <p class="package-hint">Escribe las cantidades separadas por coma. En esta maqueta, cada sticker se calcula al precio indicado.</p>
                     </div>
 
-                    <button class="preview-button" type="submit">✨ Generar vista previa</button>
-                    <p class="preview-help">Este botón solo actualiza la maqueta de esta página.</p>
+                    <div class="editor-actions">
+                        <button class="secondary-button" id="save-draft" type="button">Guardar borrador</button>
+                        <button class="preview-button publish-button" id="publish-raffle" type="button">Publicar rifa</button>
+                    </div>
+                    <button class="secondary-button" id="preview-button" type="button" style="width:100%;margin-top:10px;">Actualizar vista previa</button>
+                    <p class="preview-help">La página pública solo muestra rifas publicadas.</p>
                 </form>
             </section>
 
@@ -515,78 +629,285 @@
                 </div>
             </section>
         </div>
+        </section>
     </main>
 
     <script>
         const form = document.getElementById('form-rifa');
         const preview = document.getElementById('preview-content');
-        const escapeHTML = (value) => value.replace(/[&<>"']/g, (char) => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        })[char]);
+        const loginForm = document.getElementById('login-form');
+        const loginPanel = document.getElementById('login-panel');
+        const adminContent = document.getElementById('admin-content');
+        const loginError = document.getElementById('login-error');
+        const adminStatus = document.getElementById('admin-status');
+        const loginButton = document.getElementById('login-button');
+        const signOutButton = document.getElementById('sign-out');
+        const adminUid = 'b7SQ4D56L1amlycuGInM8mraKPA3';
+        const firebaseConfig = {
+            apiKey: 'AIzaSyANLJnmAneZQAGqr2_8dXNoTh0RUzaW7dI',
+            authDomain: 'rifadistin.firebaseapp.com',
+            databaseURL: 'https://rifadistin-default-rtdb.firebaseio.com',
+            projectId: 'rifadistin',
+            storageBucket: 'rifadistin.firebasestorage.app',
+            messagingSenderId: '639692931877',
+            appId: '1:639692931877:web:63613dae41cb403c1350cc',
+            measurementId: 'G-TF7Y5FFYT6'
+        };
 
-        form.addEventListener('submit', (event) => {
-            event.preventDefault();
+        function setAdminStatus(message, success = false) {
+            adminStatus.textContent = message;
+            adminStatus.classList.toggle('success', success);
+        }
 
+        function getRaffleFormData() {
             const data = new FormData(form);
-            const nombre = escapeHTML(String(data.get('nombre')).trim());
-            const categoria = escapeHTML(String(data.get('categoria')));
-            const premios = escapeHTML(String(data.get('premios')).trim());
-            const imagen = String(data.get('imagen')).trim();
+            const titulo = String(data.get('nombre')).trim();
+            const categoria = String(data.get('categoria'));
+            const premios = String(data.get('premios')).trim();
+            const rawImage = String(data.get('imagen')).trim();
             const precio = Number(data.get('precio'));
             const minimo = Number(data.get('minimo'));
-            let imageURL = '';
+            let imagen = '';
 
-            if (imagen) {
+            if (rawImage) {
                 try {
-                    const parsedImageURL = new URL(imagen);
+                    const parsedImageURL = new URL(rawImage);
                     if (parsedImageURL.protocol !== 'https:' && parsedImageURL.protocol !== 'http:') {
                         throw new Error('URL de imagen no válida');
                     }
-                    imageURL = parsedImageURL.href;
-                } catch {
-                    form.elements.imagen.setCustomValidity('Introduce un enlace de imagen HTTP o HTTPS válido.');
-                    form.reportValidity();
-                    return;
+                    imagen = parsedImageURL.href;
+                } catch (error) {
+                    throw new Error('Introduce un enlace de imagen HTTP o HTTPS válido.');
                 }
             }
 
-            form.elements.imagen.setCustomValidity('');
+            if (!titulo || !premios || !Number.isInteger(precio) || precio < 1 ||
+                !Number.isInteger(minimo) || minimo < 1) {
+                throw new Error('Completa el título, los premios, el precio y la compra mínima con valores válidos.');
+            }
+
             const paquetes = String(data.get('paquetes'))
                 .split(',')
                 .map((cantidad) => Number(cantidad.trim()))
                 .filter((cantidad) => Number.isInteger(cantidad) && cantidad > 0);
+            const paquetesUnicos = [...new Set(paquetes)];
 
-            if (!Number.isFinite(precio) || precio <= 0 || !Number.isInteger(minimo) || minimo < 1) {
-                form.reportValidity();
+            if (paquetesUnicos.length === 0 || paquetesUnicos.length > 10) {
+                throw new Error('Indica entre 1 y 10 cantidades de stickers para los paquetes.');
+            }
+
+            return { titulo, categoria, premios, imagen, precio, minimo, paquetes: paquetesUnicos };
+        }
+
+        function renderPreview(raffle) {
+            preview.className = 'raffle-preview';
+            preview.replaceChildren();
+
+            const image = document.createElement('div');
+            image.className = `raffle-image${raffle.imagen ? ' has-image' : ''}`;
+            image.setAttribute('aria-label', raffle.imagen ? 'Imagen del premio' : 'Vista previa del premio');
+            if (raffle.imagen) {
+                image.style.backgroundImage = `linear-gradient(180deg, transparent, rgba(16, 9, 30, .18)), url("${raffle.imagen}")`;
+            } else {
+                image.textContent = '🎁';
+            }
+
+            const content = document.createElement('div');
+            content.className = 'raffle-content';
+
+            const category = document.createElement('span');
+            category.className = 'raffle-category';
+            category.textContent = raffle.categoria;
+
+            const title = document.createElement('h3');
+            title.textContent = raffle.titulo;
+
+            const description = document.createElement('p');
+            description.className = 'raffle-description';
+            description.textContent = raffle.premios;
+
+            const meta = document.createElement('div');
+            meta.className = 'raffle-meta';
+            const price = document.createElement('span');
+            price.className = 'raffle-price';
+            price.textContent = `RD$${raffle.precio.toLocaleString('es-DO')} / sticker`;
+            const minimum = document.createElement('span');
+            minimum.className = 'raffle-minimum';
+            minimum.textContent = `Mín. ${raffle.minimo}`;
+            meta.append(price, minimum);
+
+            const packageList = document.createElement('div');
+            packageList.className = 'package-list';
+            raffle.paquetes.forEach((cantidad) => {
+                const chip = document.createElement('span');
+                chip.className = 'package-chip';
+                chip.textContent = `${cantidad} stickers · RD$${(cantidad * raffle.precio).toLocaleString('es-DO')}`;
+                packageList.append(chip);
+            });
+
+            content.append(category, title, description, meta, packageList);
+            preview.append(image, content);
+        }
+
+        function showRaffleForm(raffle) {
+            form.elements.nombre.value = raffle.titulo || '';
+            form.elements.categoria.value = raffle.categoria || 'Vehículos';
+            form.elements.premios.value = raffle.premios || '';
+            form.elements.imagen.value = raffle.imagen || '';
+            form.elements.precio.value = raffle.precio || '';
+            form.elements.minimo.value = raffle.minimo || 3;
+            form.elements.paquetes.value = Array.isArray(raffle.paquetes) && raffle.paquetes.length
+                ? raffle.paquetes.join(', ')
+                : '3, 5, 10, 25, 50';
+            renderPreview(raffle);
+        }
+
+        async function saveRaffle(active) {
+            if (!firebase.auth().currentUser || firebase.auth().currentUser.uid !== adminUid) {
+                setAdminStatus('Tu sesión no tiene permiso para administrar rifas.');
                 return;
             }
 
-            const packageChips = paquetes.length
-                ? paquetes.map((cantidad) => `<span class="package-chip">${cantidad} stickers · RD$${(cantidad * precio).toLocaleString('es-DO')}</span>`).join('')
-                : '<span class="package-chip">Paquetes por definir</span>';
+            let raffle;
+            try {
+                raffle = getRaffleFormData();
+            } catch (error) {
+                setAdminStatus(error.message);
+                return;
+            }
 
-            preview.className = 'raffle-preview';
-            preview.innerHTML = `
-                <div class="raffle-image${imageURL ? ' has-image' : ''}" aria-label="${imageURL ? 'Imagen del premio' : 'Vista previa del premio'}">${imageURL ? '' : '🎁'}</div>
-                <div class="raffle-content">
-                    <span class="raffle-category">${categoria}</span>
-                    <h3>${nombre}</h3>
-                    <p class="raffle-description">${premios}</p>
-                    <div class="raffle-meta">
-                        <span class="raffle-price">RD$${precio.toLocaleString('es-DO')} / sticker</span>
-                        <span class="raffle-minimum">Mín. ${minimo}</span>
-                    </div>
-                    <div class="package-list">${packageChips}</div>
-                </div>`;
-            if (imageURL) {
-                preview.querySelector('.raffle-image').style.backgroundImage =
-                    `linear-gradient(180deg, transparent, rgba(16, 9, 30, .18)), url("${imageURL.replace(/["\\]/g, '\\$&')}")`;
+            const button = active ? document.getElementById('publish-raffle') : document.getElementById('save-draft');
+            button.disabled = true;
+            setAdminStatus(active ? 'Publicando la rifa…' : 'Guardando borrador…');
+
+            try {
+                const raffleData = {
+                    ...raffle,
+                    activa: active,
+                    actualizado: Date.now()
+                };
+                await firebase.database().ref().update({
+                    'rifas/borrador': raffleData,
+                    'rifas/activa': active ? raffleData : null
+                });
+                renderPreview(raffle);
+                setAdminStatus(active ? 'Rifa publicada en la página principal.' : 'Borrador guardado. No aparece en la página pública.', true);
+                document.getElementById('publish-raffle').textContent = active ? 'Actualizar rifa publicada' : 'Publicar rifa';
+            } catch (error) {
+                setAdminStatus(`No se pudo guardar. Revisa las reglas de Realtime Database: ${error.message}`);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        document.getElementById('preview-button').addEventListener('click', () => {
+            try {
+                renderPreview(getRaffleFormData());
+                setAdminStatus('Vista previa actualizada. Aún no se guardó ni publicó.');
+            } catch (error) {
+                setAdminStatus(error.message);
             }
         });
+
+        document.getElementById('save-draft').addEventListener('click', () => saveRaffle(false));
+        document.getElementById('publish-raffle').addEventListener('click', () => saveRaffle(true));
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            document.getElementById('preview-button').click();
+        });
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            loginError.textContent = '';
+            loginButton.disabled = true;
+
+            try {
+                await firebase.auth().signInWithEmailAndPassword(
+                    loginForm.elements['login-email'].value.trim(),
+                    loginForm.elements['login-password'].value
+                );
+            } catch (error) {
+                loginError.textContent = error.code === 'auth/invalid-credential'
+                    ? 'Correo o contraseña incorrectos.'
+                    : `No se pudo iniciar sesión: ${error.message}`;
+            } finally {
+                loginButton.disabled = false;
+            }
+        });
+
+        document.getElementById('reset-password').addEventListener('click', async () => {
+            const email = loginForm.elements['login-email'].value.trim();
+            if (!email) {
+                loginError.textContent = 'Escribe tu correo para enviarte el enlace de recuperación.';
+                return;
+            }
+
+            try {
+                await firebase.auth().sendPasswordResetEmail(email);
+                loginError.textContent = 'Si el correo está registrado, recibirás un enlace para restablecer la contraseña.';
+            } catch (error) {
+                loginError.textContent = `No se pudo enviar el enlace: ${error.message}`;
+            }
+        });
+
+        signOutButton.addEventListener('click', () => firebase.auth().signOut());
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const database = firebase.database();
+
+            auth.onAuthStateChanged(async (user) => {
+                loginError.textContent = '';
+                if (!user) {
+                    loginPanel.hidden = false;
+                    adminContent.hidden = true;
+                    signOutButton.hidden = true;
+                    return;
+                }
+
+                if (user.uid !== adminUid) {
+                    loginError.textContent = 'Esta cuenta no está autorizada para administrar rifas.';
+                    await auth.signOut();
+                    return;
+                }
+
+                loginPanel.hidden = true;
+                adminContent.hidden = false;
+                signOutButton.hidden = false;
+                setAdminStatus('Sesión de administrador iniciada.', true);
+
+                try {
+                    const snapshot = await database.ref('rifas/borrador').once('value');
+                    const raffle = snapshot.val();
+                    if (raffle) {
+                        showRaffleForm(raffle);
+                        document.getElementById('publish-raffle').textContent = raffle.activa
+                            ? 'Actualizar rifa publicada'
+                            : 'Publicar rifa';
+                        setAdminStatus(raffle.activa ? 'Rifa publicada cargada.' : 'Borrador cargado.', true);
+                    } else {
+                        const activeSnapshot = await database.ref('rifas/activa').once('value');
+                        const activeRaffle = activeSnapshot.val();
+                        if (activeRaffle) {
+                            showRaffleForm(activeRaffle);
+                            document.getElementById('publish-raffle').textContent = 'Actualizar rifa publicada';
+                            setAdminStatus('Rifa publicada cargada.', true);
+                        } else {
+                            setAdminStatus('No hay rifas guardadas. Completa el formulario para crear una.');
+                        }
+                    }
+                } catch (error) {
+                    setAdminStatus(`No se pudieron cargar las rifas. Publica las reglas de la base de datos: ${error.message}`);
+                }
+            });
+        } catch (error) {
+            loginPanel.hidden = false;
+            loginError.textContent = 'No se pudieron cargar los servicios de Firebase. Comprueba tu conexión e inténtalo de nuevo.';
+            loginButton.disabled = true;
+            console.error('Firebase initialization failed:', error);
+        }
     </script>
 </body>
 </html>
