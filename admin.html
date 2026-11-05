@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         :root {
             color-scheme: dark;
@@ -606,7 +607,11 @@
                             <label for="paquetes">Paquetes disponibles</label>
                             <input id="paquetes" name="paquetes" type="text" placeholder="3, 5, 10, 25, 50" value="3, 5, 10, 25, 50">
                         </div>
-                        <p class="package-hint">Escribe las cantidades separadas por coma. En esta maqueta, cada sticker se calcula al precio indicado.</p>
+                        <div class="field field-full">
+                            <label for="pago-instrucciones">Instrucciones para pagar por transferencia o depósito</label>
+                            <textarea id="pago-instrucciones" name="pagoInstrucciones" maxlength="500" placeholder="Banco, tipo de cuenta, titular y número para recibir el pago"></textarea>
+                        </div>
+                        <p class="package-hint">Escribe las cantidades separadas por coma. Los datos de pago se mostrarán públicamente en la página.</p>
                     </div>
 
                     <div class="editor-actions">
@@ -629,6 +634,15 @@
                 </div>
             </section>
         </div>
+        <section class="panel" aria-labelledby="orders-title" style="margin-top:24px;">
+            <div class="section-heading">
+                <h2 id="orders-title">Solicitudes y comprobantes</h2>
+                <p>Revisa cada comprobante y confirma el pago para asignar códigos únicos de 5 dígitos.</p>
+            </div>
+            <div id="participation-orders" aria-live="polite">
+                <p class="preview-help">Cargando solicitudes…</p>
+            </div>
+        </section>
         </section>
     </main>
 
@@ -642,6 +656,9 @@
         const adminStatus = document.getElementById('admin-status');
         const loginButton = document.getElementById('login-button');
         const signOutButton = document.getElementById('sign-out');
+        const ordersList = document.getElementById('participation-orders');
+        let database;
+        let ordersRef;
         const adminUid = 'b7SQ4D56L1amlycuGInM8mraKPA3';
         const firebaseConfig = {
             apiKey: 'AIzaSyANLJnmAneZQAGqr2_8dXNoTh0RUzaW7dI',
@@ -667,6 +684,7 @@
             const rawImage = String(data.get('imagen')).trim();
             const precio = Number(data.get('precio'));
             const minimo = Number(data.get('minimo'));
+            const pagoInstrucciones = String(data.get('pagoInstrucciones')).trim();
             let imagen = '';
 
             if (rawImage) {
@@ -692,11 +710,12 @@
                 .filter((cantidad) => Number.isInteger(cantidad) && cantidad > 0);
             const paquetesUnicos = [...new Set(paquetes)];
 
-            if (paquetesUnicos.length === 0 || paquetesUnicos.length > 10) {
-                throw new Error('Indica entre 1 y 10 cantidades de stickers para los paquetes.');
+            if (paquetesUnicos.length === 0 || paquetesUnicos.length > 10 ||
+                minimo > 50 || paquetesUnicos.some((cantidad) => cantidad < minimo || cantidad > 50)) {
+                throw new Error('Indica paquetes de entre la compra mínima y 50 stickers.');
             }
 
-            return { titulo, categoria, premios, imagen, precio, minimo, paquetes: paquetesUnicos };
+            return { titulo, categoria, premios, imagen, precio, minimo, paquetes: paquetesUnicos, pagoInstrucciones };
         }
 
         function renderPreview(raffle) {
@@ -759,7 +778,143 @@
             form.elements.paquetes.value = Array.isArray(raffle.paquetes) && raffle.paquetes.length
                 ? raffle.paquetes.join(', ')
                 : '3, 5, 10, 25, 50';
+            form.elements.pagoInstrucciones.value = raffle.pagoInstrucciones || '';
             renderPreview(raffle);
+        }
+
+        function renderParticipationOrders(snapshot) {
+            ordersList.replaceChildren();
+            const participants = snapshot.val() || {};
+            const orders = Object.entries(participants).flatMap(([uid, userOrders]) =>
+                Object.entries(userOrders || {}).map(([id, order]) => ({ uid, id, order }))
+            ).sort((a, b) => Number(b.order.creado || 0) - Number(a.order.creado || 0));
+
+            if (!orders.length) {
+                const empty = document.createElement('p');
+                empty.className = 'preview-help';
+                empty.textContent = 'Todavía no hay solicitudes.';
+                ordersList.append(empty);
+                return;
+            }
+
+            for (const { uid, id, order } of orders) {
+                const card = document.createElement('article');
+                card.style.cssText = 'border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px;margin:12px 0;background:rgba(255,255,255,.03)';
+                const heading = document.createElement('h3');
+                heading.textContent = `${order.nombre || 'Participante'} · ${order.estado || 'pendiente'}`;
+                const details = document.createElement('p');
+                details.textContent = `${order.telefono || ''} · ${order.correo || ''} · ${order.cantidad} stickers · RD$${Number(order.total).toLocaleString('es-DO')}`;
+                details.style.cssText = 'color:var(--muted);margin:8px 0';
+                card.append(heading, details);
+
+                const proof = document.createElement('button');
+                proof.className = 'secondary-button';
+                proof.type = 'button';
+                proof.textContent = 'Abrir comprobante';
+                proof.addEventListener('click', async () => {
+                    const proofWindow = window.open('about:blank', '_blank');
+                    if (!proofWindow) {
+                        setAdminStatus('Permite las ventanas emergentes para abrir el comprobante.');
+                        return;
+                    }
+                    try {
+                        const url = await firebase.storage().ref(order.comprobante).getDownloadURL();
+                        proofWindow.location = url;
+                    } catch (error) {
+                        proofWindow.close();
+                        setAdminStatus(`No se pudo abrir el comprobante: ${error.message}`);
+                    }
+                });
+                card.append(proof);
+
+                if (order.estado === 'pendiente') {
+                    const approve = document.createElement('button');
+                    approve.className = 'preview-button';
+                    approve.type = 'button';
+                    approve.textContent = 'Confirmar pago';
+                    approve.style.marginLeft = '8px';
+                    approve.addEventListener('click', () => reviewOrder(uid, id, order, true, approve));
+                    const reject = document.createElement('button');
+                    reject.className = 'secondary-button';
+                    reject.type = 'button';
+                    reject.textContent = 'Rechazar';
+                    reject.style.marginLeft = '8px';
+                    reject.addEventListener('click', () => reviewOrder(uid, id, order, false, reject));
+                    card.append(approve, reject);
+                } else if (order.estado === 'aprobado' && Array.isArray(order.codigos)) {
+                    const codes = document.createElement('p');
+                    codes.textContent = `Códigos asignados: ${order.codigos.join(', ')}`;
+                    codes.style.cssText = 'margin-top:10px;color:var(--gold);font-weight:700';
+                    card.append(codes);
+                }
+                ordersList.append(card);
+            }
+        }
+
+        async function reviewOrder(uid, id, order, approve, button) {
+            button.disabled = true;
+            let claimed = false;
+            let codes = [];
+            try {
+                const orderRef = database.ref(`participaciones/${uid}/${id}`);
+                const claim = await orderRef.transaction((current) => {
+                    if (!current || current.estado !== 'pendiente') return;
+                    return { ...current, estado: 'procesando' };
+                });
+                if (!claim.committed) {
+                    throw new Error('Esta solicitud ya fue revisada.');
+                }
+                claimed = true;
+
+                if (approve) {
+                    const count = Number(order.cantidad);
+                    const result = await database.ref('rifas/codigos').transaction((currentCodes) => {
+                        const registry = currentCodes || {};
+                        const newlyAssigned = [];
+                        for (let attempts = 0; newlyAssigned.length < count && attempts < 10000; attempts += 1) {
+                            const random = new Uint32Array(1);
+                            window.crypto.getRandomValues(random);
+                            const code = String(random[0] % 100000).padStart(5, '0');
+                            if (!registry[code]) {
+                                registry[code] = true;
+                                newlyAssigned.push(code);
+                            }
+                        }
+                        if (newlyAssigned.length < count) return;
+                        codes = newlyAssigned;
+                        return registry;
+                    });
+                    if (!result.committed || codes.length !== count) {
+                        throw new Error('No se pudieron asignar códigos disponibles. Inténtalo otra vez.');
+                    }
+                }
+
+                try {
+                    await orderRef.update({
+                        estado: approve ? 'aprobado' : 'rechazado',
+                        ...(approve ? { codigos } : {}),
+                        revisadoEn: Date.now()
+                    });
+                } catch (error) {
+                    if (codes.length) {
+                        await Promise.all(codes.map((code) => database.ref(`rifas/codigos/${code}`).remove()));
+                    }
+                    throw error;
+                }
+                claimed = false;
+                setAdminStatus(approve ? `Pago confirmado. Códigos: ${codes.join(', ')}` : 'Solicitud rechazada.', true);
+            } catch (error) {
+                if (claimed) {
+                    try {
+                        await database.ref(`participaciones/${uid}/${id}`).update({ estado: 'pendiente' });
+                    } catch (restoreError) {
+                        console.error('Could not restore the pending participation after review failed:', restoreError);
+                    }
+                }
+                setAdminStatus(`No se pudo revisar la solicitud: ${error.message}`);
+            } finally {
+                button.disabled = false;
+            }
         }
 
         async function saveRaffle(active) {
@@ -773,6 +928,10 @@
                 raffle = getRaffleFormData();
             } catch (error) {
                 setAdminStatus(error.message);
+                return;
+            }
+            if (active && !raffle.pagoInstrucciones) {
+                setAdminStatus('Agrega las instrucciones de transferencia antes de publicar para que puedan pagar.');
                 return;
             }
 
@@ -856,11 +1015,15 @@
         try {
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
-            const database = firebase.database();
+            database = firebase.database();
 
             auth.onAuthStateChanged(async (user) => {
                 loginError.textContent = '';
                 if (!user) {
+                    if (ordersRef) {
+                        ordersRef.off('value', renderParticipationOrders);
+                        ordersRef = null;
+                    }
                     loginPanel.hidden = false;
                     adminContent.hidden = true;
                     signOutButton.hidden = true;
@@ -877,6 +1040,11 @@
                 adminContent.hidden = false;
                 signOutButton.hidden = false;
                 setAdminStatus('Sesión de administrador iniciada.', true);
+                if (ordersRef) ordersRef.off('value', renderParticipationOrders);
+                ordersRef = database.ref('participaciones');
+                ordersRef.on('value', renderParticipationOrders, (error) => {
+                    setAdminStatus(`No se pudieron cargar las solicitudes: ${error.message}`);
+                });
 
                 try {
                     const snapshot = await database.ref('rifas/borrador').once('value');

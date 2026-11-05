@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /comprobantes/{uid}/{pedido}/{archivo} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == uid || request.auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3');
+      allow create: if request.auth != null &&
+        request.auth.uid == uid &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(jpeg|png|webp)|application/pdf');
+      allow update, delete: if request.auth != null &&
+        request.auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3';
+    }
+  }
+}

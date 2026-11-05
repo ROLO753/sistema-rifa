@@ -7,7 +7,9 @@ HTML
     <title>RIFA2RD - Sorteos Electrónicos</title>
     <!-- Firebase SDK (Compat v9) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         :root {
             --bg-main: #0b0d10;
@@ -952,6 +954,70 @@ HTML
                 transition-duration: 0.01ms !important;
             }
         }
+
+        .participation-modal {
+            width: min(94vw, 520px);
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: auto;
+            padding: 26px;
+            color: var(--text-white);
+            background: var(--card-bg);
+            border: 2px solid var(--yellow);
+            border-radius: 22px;
+        }
+
+        .participation-modal::backdrop {
+            background: rgba(0, 0, 0, .82);
+            backdrop-filter: blur(4px);
+        }
+
+        .participation-modal h2 {
+            margin-bottom: 12px;
+        }
+
+        .participation-modal p {
+            color: var(--text-gray);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .participation-modal label {
+            display: block;
+            margin: 12px 0 6px;
+            font-weight: 700;
+        }
+
+        .participation-modal input,
+        .participation-modal select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #0b0d10;
+            color: var(--text-white);
+        }
+
+        .participation-modal button {
+            margin-top: 14px;
+        }
+
+        .participation-message {
+            margin-top: 12px;
+            font-weight: 700;
+        }
+
+        .participation-message.error {
+            color: #ff7b7b;
+        }
+
+        .my-orders {
+            margin-top: 20px;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-gray);
+        }
     </style>
 </head>
 <body>
@@ -992,6 +1058,31 @@ HTML
         </div>
     </main>
 
+    <dialog id="participation-dialog" class="participation-modal">
+        <button id="close-participation" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        <h2>Participar en la rifa</h2>
+        <p id="payment-instructions"></p>
+        <form id="participation-form">
+            <label for="package-choice">Cantidad de stickers</label>
+            <select id="package-choice" name="cantidad" required></select>
+            <label for="participant-name">Nombre</label>
+            <input id="participant-name" name="nombre" maxlength="100" autocomplete="name" required>
+            <label for="participant-phone">Teléfono / WhatsApp</label>
+            <input id="participant-phone" name="telefono" type="tel" maxlength="30" autocomplete="tel" required>
+            <label for="participant-email">Correo electrónico</label>
+            <input id="participant-email" name="correo" type="email" maxlength="254" autocomplete="email" required>
+            <label for="payment-proof">Comprobante (imagen o PDF, máximo 5 MB)</label>
+            <input id="payment-proof" name="comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+            <p id="purchase-total"></p>
+            <button class="btn-participar" id="submit-participation" type="submit">Enviar comprobante</button>
+            <p id="participation-message" class="participation-message" role="status" aria-live="polite"></p>
+        </form>
+        <div class="my-orders">
+            <strong>Mis solicitudes</strong>
+            <div id="my-orders-list">Tus códigos aparecerán aquí cuando confirmemos el pago.</div>
+        </div>
+    </dialog>
+
     <!-- Vista Verificador -->
     <main id="vista-verificar" class="container" style="display: none;">
         <div class="verificador-container">
@@ -1013,6 +1104,120 @@ HTML
         };
 
         let db;
+        let auth;
+        let activeRaffle;
+        let ordersRef;
+        const participationDialog = document.getElementById('participation-dialog');
+        const participationForm = document.getElementById('participation-form');
+        const participationMessage = document.getElementById('participation-message');
+        const packageChoice = document.getElementById('package-choice');
+
+        function setParticipationMessage(message, isError = false) {
+            participationMessage.textContent = message;
+            participationMessage.classList.toggle('error', isError);
+        }
+
+        function updatePurchaseTotal() {
+            if (!activeRaffle) return;
+            const quantity = Number(packageChoice.value);
+            document.getElementById('purchase-total').textContent =
+                `Total: RD$${(quantity * Number(activeRaffle.precio)).toLocaleString('es-DO')}`;
+        }
+
+        function openParticipation(raffle) {
+            activeRaffle = raffle;
+            packageChoice.replaceChildren();
+            (Array.isArray(raffle.paquetes) ? raffle.paquetes : []).forEach((amount) => {
+                const option = document.createElement('option');
+                option.value = String(amount);
+                option.textContent = `${amount} stickers · RD$${(amount * Number(raffle.precio)).toLocaleString('es-DO')}`;
+                packageChoice.append(option);
+            });
+            document.getElementById('payment-instructions').textContent =
+                raffle.pagoInstrucciones || 'El administrador aún no ha agregado las instrucciones de pago.';
+            setParticipationMessage('');
+            updatePurchaseTotal();
+            participationDialog.showModal();
+        }
+
+        function renderMyOrders(snapshot) {
+            const container = document.getElementById('my-orders-list');
+            container.replaceChildren();
+            const orders = Object.values(snapshot.val() || {}).sort((a, b) => Number(b.creado || 0) - Number(a.creado || 0));
+            if (!orders.length) {
+                container.textContent = 'Tus códigos aparecerán aquí cuando confirmemos el pago.';
+                return;
+            }
+            orders.forEach((order) => {
+                const item = document.createElement('p');
+                const status = order.estado === 'aprobado'
+                    ? `Pago confirmado · Códigos: ${(order.codigos || []).join(', ')}`
+                    : order.estado === 'rechazado'
+                        ? 'Comprobante rechazado. Envía una nueva solicitud con un comprobante válido.'
+                        : order.estado === 'procesando'
+                            ? 'Estamos revisando tu comprobante.'
+                            : 'Comprobante recibido · Pago pendiente de revisión.';
+                item.textContent = `${order.cantidad} stickers · ${status}`;
+                container.append(item);
+            });
+        }
+
+        async function submitParticipation(event) {
+            event.preventDefault();
+            const button = document.getElementById('submit-participation');
+            const file = participationForm.elements.comprobante.files[0];
+            const quantity = Number(packageChoice.value);
+            if (!file || file.size > 5 * 1024 * 1024 ||
+                !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
+                setParticipationMessage('Elige una imagen JPG, PNG, WebP o PDF de máximo 5 MB.', true);
+                return;
+            }
+            if (!activeRaffle || !activeRaffle.activa ||
+                !Array.isArray(activeRaffle.paquetes) || !activeRaffle.paquetes.includes(quantity)) {
+                setParticipationMessage('Esta rifa o paquete ya no está disponible. Recarga la página.', true);
+                return;
+            }
+
+            button.disabled = true;
+            setParticipationMessage('Enviando el comprobante…');
+            let uploadedProof;
+            try {
+                let user = auth.currentUser;
+                if (!user) {
+                    const credential = await auth.signInAnonymously();
+                    user = credential.user;
+                }
+                const orderRef = db.ref(`participaciones/${user.uid}`).push();
+                const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
+                uploadedProof = `comprobantes/${user.uid}/${orderRef.key}/comprobante.${extension}`;
+                await firebase.storage().ref(uploadedProof).put(file, { contentType: file.type });
+                await orderRef.set({
+                    nombre: participationForm.elements.nombre.value.trim(),
+                    telefono: participationForm.elements.telefono.value.trim(),
+                    correo: participationForm.elements.correo.value.trim(),
+                    cantidad: quantity,
+                    precioUnitario: Number(activeRaffle.precio),
+                    total: quantity * Number(activeRaffle.precio),
+                    estado: 'pendiente',
+                    comprobante: uploadedProof,
+                    creado: Date.now()
+                });
+                participationForm.reset();
+                updatePurchaseTotal();
+                setParticipationMessage('Comprobante enviado. Tus códigos se asignarán cuando el administrador confirme el pago.');
+            } catch (error) {
+                const message = error.code === 'auth/operation-not-allowed'
+                    ? 'Hay que activar el acceso anónimo en Firebase Authentication antes de participar.'
+                    : `No se pudo enviar la solicitud: ${error.message}${uploadedProof ? ' El archivo se cargó, pero el pedido no se guardó; avisa al administrador antes de volver a subirlo.' : ''}`;
+                setParticipationMessage(message, true);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        document.getElementById('close-participation').addEventListener('click', () => participationDialog.close());
+        packageChoice.addEventListener('change', updatePurchaseTotal);
+        participationForm.addEventListener('submit', submitParticipation);
 
         function cambiarVista(vista, btn) {
             document.getElementById('vista-rifas').style.display = vista === 'rifas' ? 'block' : 'none';
@@ -1081,9 +1286,10 @@ HTML
                 });
             }
             body.append(packages);
-            const unavailable = crearElemento('p', 'participation-notice', 'Participación próximamente');
-            unavailable.setAttribute('aria-label', 'La participación aún no está habilitada');
-            body.append(unavailable);
+            const participate = crearElemento('button', 'btn-participar', 'Participar y subir comprobante');
+            participate.type = 'button';
+            participate.addEventListener('click', () => openParticipation(raffle));
+            body.append(participate);
             card.append(imageContainer, body);
 
             const list = document.getElementById('rifa-list');
@@ -1093,12 +1299,23 @@ HTML
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
+            auth = firebase.auth();
+            auth.onAuthStateChanged((user) => {
+                if (ordersRef) ordersRef.off('value', renderMyOrders);
+                ordersRef = null;
+                if (user) {
+                    ordersRef = db.ref(`participaciones/${user.uid}`);
+                    ordersRef.on('value', renderMyOrders);
+                }
+            });
             db.ref('rifas/activa').on('value', (snapshot) => {
                 const raffle = snapshot.val();
                 if (!raffle || raffle.activa !== true) {
+                    activeRaffle = null;
                     mostrarSinRifa('La próxima gran jugada está por llegar', 'Muy pronto habrá nuevas sorpresas.');
                     return;
                 }
+                activeRaffle = raffle;
                 mostrarRifa(raffle);
             }, (error) => {
                 console.error('Could not load active raffle:', error);
