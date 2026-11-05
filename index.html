@@ -367,6 +367,415 @@ HTML
             letter-spacing: 1px;
             box-shadow: 0 4px 12px rgba(250, 204, 21, 0.2);
         }
+
+        :root {
+            --bg-main: #090816;
+            --card-bg: #151329;
+            --yellow: #f9ed45;
+            --yellow-hover: #fff76a;
+            --text-white: #fffdf7;
+            --text-gray: #b7b3d1;
+            --border: rgba(255, 255, 255, 0.12);
+            --pink: #ff4db8;
+            --cyan: #45e6ff;
+            --purple: #8557ff;
+        }
+
+        body {
+            position: relative;
+            overflow-x: hidden;
+            background:
+                radial-gradient(ellipse at 50% -20%, rgba(133, 87, 255, 0.23), transparent 55%),
+                linear-gradient(180deg, #0d0b1c 0%, #090816 65%, #100a20 100%);
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.24;
+            pointer-events: none;
+            z-index: -1;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+
+        body::before {
+            top: 20%;
+            left: -180px;
+            background: var(--pink);
+        }
+
+        body::after {
+            right: -180px;
+            bottom: 5%;
+            background: var(--cyan);
+            animation-delay: -5s;
+        }
+
+        @keyframes drift {
+            from { transform: translate3d(0, -18px, 0) scale(0.9); }
+            to { transform: translate3d(35px, 24px, 0) scale(1.12); }
+        }
+
+        header {
+            background: rgba(12, 10, 28, 0.78);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px);
+        }
+
+        .logo-box {
+            color: #fff;
+            background: linear-gradient(135deg, var(--pink), var(--purple) 55%, #3c9bff);
+            border: 0;
+            box-shadow: 0 0 24px rgba(255, 77, 184, 0.35);
+        }
+
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-nav.active,
+        .btn-nav:hover {
+            background: var(--yellow);
+            color: #171126;
+            border-color: var(--yellow);
+            box-shadow: 0 0 22px rgba(249, 237, 69, 0.28);
+        }
+
+        .hero {
+            position: relative;
+            max-width: 1100px;
+            margin: 48px auto 0;
+            padding: 0 20px;
+        }
+
+        .hero-panel {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            padding: clamp(30px, 6vw, 64px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 30px;
+            background:
+                radial-gradient(ellipse at 85% 20%, rgba(255, 77, 184, 0.25), transparent 38%),
+                radial-gradient(ellipse at 12% 100%, rgba(69, 230, 255, 0.16), transparent 42%),
+                linear-gradient(120deg, rgba(35, 25, 68, 0.96), rgba(17, 15, 39, 0.94));
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-panel::after {
+            content: "✦";
+            position: absolute;
+            z-index: -1;
+            right: 9%;
+            top: 8%;
+            color: rgba(249, 237, 69, 0.2);
+            font-size: clamp(100px, 20vw, 230px);
+            line-height: 1;
+            animation: sparkle 4s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            50% { transform: rotate(18deg) scale(1.08); opacity: 0.55; }
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding: 8px 13px;
+            border: 1px solid rgba(69, 230, 255, 0.32);
+            border-radius: 30px;
+            color: var(--cyan);
+            background: rgba(69, 230, 255, 0.08);
+            font-size: 0.75rem;
+            font-weight: 900;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .hero-kicker::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan);
+        }
+
+        .hero h1 {
+            max-width: 680px;
+            margin-bottom: 14px;
+            font-size: clamp(2.5rem, 7vw, 5rem);
+            font-weight: 1000;
+            letter-spacing: -0.07em;
+            line-height: 0.98;
+        }
+
+        .hero h1 span {
+            color: var(--yellow);
+            text-shadow: 0 0 35px rgba(249, 237, 69, 0.25);
+        }
+
+        .hero-copy {
+            max-width: 520px;
+            color: var(--text-gray);
+            font-size: clamp(1rem, 2vw, 1.15rem);
+            line-height: 1.6;
+        }
+
+        .float-chip {
+            position: absolute;
+            display: grid;
+            place-items: center;
+            width: 62px;
+            height: 62px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25), inset 0 1px rgba(255, 255, 255, 0.16);
+            font-size: 1.8rem;
+            backdrop-filter: blur(12px);
+            animation: bob 4s ease-in-out infinite;
+        }
+
+        .float-chip-one {
+            top: 23%;
+            right: 18%;
+            transform: rotate(10deg);
+        }
+
+        .float-chip-two {
+            right: 8%;
+            bottom: 17%;
+            animation-delay: -1.5s;
+            transform: rotate(-12deg);
+        }
+
+        .float-chip-three {
+            top: 58%;
+            right: 33%;
+            width: 44px;
+            height: 44px;
+            border-radius: 15px;
+            color: var(--yellow);
+            font-size: 1.4rem;
+            animation-delay: -2.5s;
+        }
+
+        @keyframes bob {
+            0%, 100% { margin-top: 0; }
+            50% { margin-top: -13px; }
+        }
+
+        .container {
+            margin-top: 36px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+
+        .section-title::before {
+            content: "";
+            width: 5px;
+            height: 30px;
+            border-radius: 5px;
+            background: linear-gradient(var(--pink), var(--purple));
+            box-shadow: 0 0 16px rgba(255, 77, 184, 0.45);
+        }
+
+        .rifa-card {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: linear-gradient(155deg, rgba(31, 26, 58, 0.98), rgba(17, 15, 35, 0.98));
+            box-shadow: 0 22px 65px rgba(0, 0, 0, 0.35), 0 0 30px rgba(133, 87, 255, 0.12);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .rifa-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 28px 75px rgba(0, 0, 0, 0.4), 0 0 38px rgba(255, 77, 184, 0.2);
+        }
+
+        .rifa-img-container {
+            height: 240px;
+            background: linear-gradient(135deg, #34215c, #16132b);
+        }
+
+        .rifa-img-container::after {
+            content: "";
+            position: absolute;
+            inset: 45% 0 0;
+            background: linear-gradient(transparent, rgba(15, 12, 32, 0.78));
+            pointer-events: none;
+        }
+
+        .rifa-img-container img {
+            transition: transform 0.5s ease;
+        }
+
+        .rifa-card:hover .rifa-img-container img {
+            transform: scale(1.06);
+        }
+
+        .badge-auto {
+            z-index: 1;
+            background: var(--pink);
+            color: white;
+            box-shadow: 0 5px 20px rgba(255, 77, 184, 0.35);
+        }
+
+        .rifa-body {
+            padding: 24px;
+        }
+
+        .rifa-title {
+            font-size: 1.45rem;
+            line-height: 1.2;
+        }
+
+        .price {
+            color: var(--yellow);
+            text-shadow: 0 0 20px rgba(249, 237, 69, 0.22);
+        }
+
+        .progress-container {
+            background: rgba(255, 255, 255, 0.08);
+            border: 0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
+            box-shadow: 0 0 14px rgba(133, 87, 255, 0.7);
+        }
+
+        .btn-participar {
+            color: #171126;
+            background: linear-gradient(100deg, var(--yellow), #ffbd52);
+            box-shadow: 0 8px 24px rgba(249, 237, 69, 0.18);
+        }
+
+        .btn-participar:hover {
+            background: linear-gradient(100deg, #fff76a, #ffd178);
+            box-shadow: 0 10px 28px rgba(249, 237, 69, 0.3);
+        }
+
+        .verificador-container,
+        .modal-card {
+            border-color: rgba(255, 255, 255, 0.15);
+            background:
+                radial-gradient(ellipse at 100% 0, rgba(133, 87, 255, 0.16), transparent 45%),
+                var(--card-bg);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .package-card {
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .package-card:hover,
+        .package-card.selected {
+            background: rgba(249, 237, 69, 0.07);
+            box-shadow: 0 0 24px rgba(249, 237, 69, 0.08);
+        }
+
+        .form-input {
+            background: rgba(7, 6, 18, 0.8);
+        }
+
+        .ticket-pill {
+            background: var(--cyan);
+            color: #07151a;
+            box-shadow: 0 4px 18px rgba(69, 230, 255, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 12px 16px;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .nav-buttons {
+                gap: 7px;
+            }
+
+            .btn-nav {
+                padding: 9px 13px;
+                font-size: 0.78rem;
+            }
+
+            .hero {
+                margin-top: 24px;
+                padding: 0 14px;
+            }
+
+            .hero-panel {
+                min-height: 280px;
+                padding: 30px 24px;
+                border-radius: 24px;
+            }
+
+            .hero-copy {
+                max-width: 75%;
+            }
+
+            .float-chip-one {
+                top: auto;
+                right: 11%;
+                bottom: 22%;
+            }
+
+            .float-chip-two {
+                right: 7%;
+                bottom: 7%;
+                width: 48px;
+                height: 48px;
+                font-size: 1.4rem;
+            }
+
+            .float-chip-three {
+                display: none;
+            }
+
+            .container {
+                margin-top: 30px;
+                padding: 0 14px;
+            }
+
+            .rifa-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box-flex {
+                flex-direction: column;
+            }
+
+            .search-box-flex .btn-participar {
+                min-height: 48px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -382,9 +791,20 @@ HTML
         </div>
     </header>
 
+    <section class="hero" aria-label="Bienvenida">
+        <div class="hero-panel">
+            <div class="hero-kicker">La suerte se vive aquí</div>
+            <h1>Juega en grande.<br><span>Sueña sin límites.</span></h1>
+            <p class="hero-copy">El próximo ganador puedes ser tú. Elige tu paquete, participa y prepárate para vivir la emoción.</p>
+            <span class="float-chip float-chip-one" aria-hidden="true">🎟️</span>
+            <span class="float-chip float-chip-two" aria-hidden="true">✨</span>
+            <span class="float-chip float-chip-three" aria-hidden="true">✦</span>
+        </div>
+    </section>
+
     <!-- Vista de Rifas -->
     <main id="vista-rifas" class="container">
-        <h1 class="section-title">Todas las rifas</h1>
+        <h2 class="section-title">Rifas que están encendidas</h2>
         <div class="rifa-grid">
             <div class="rifa-card">
                 <div class="rifa-img-container">
