@@ -10,6 +10,14 @@
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
           }
         },
+        "titulo": { ".validate": true },
+        "categoria": { ".validate": true },
+        "premios": { ".validate": true },
+        "imagen": { ".validate": true },
+        "precio": { ".validate": true },
+        "minimo": { ".validate": true },
+        "activa": { ".validate": true },
+        "actualizado": { ".validate": true },
         "$other": {
           ".validate": false
         }
@@ -23,6 +31,14 @@
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
           }
         },
+        "titulo": { ".validate": true },
+        "categoria": { ".validate": true },
+        "premios": { ".validate": true },
+        "imagen": { ".validate": true },
+        "precio": { ".validate": true },
+        "minimo": { ".validate": true },
+        "activa": { ".validate": true },
+        "actualizado": { ".validate": true },
         "$other": {
           ".validate": false
         }
