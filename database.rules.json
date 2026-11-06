@@ -4,7 +4,7 @@
       "activa": {
         ".read": true,
         ".write": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
-        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'pagoInstrucciones', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('pagoInstrucciones').isString() && newData.child('pagoInstrucciones').val().length <= 500 && newData.child('activa').val() == true && newData.child('actualizado').isNumber()",
+        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'pagoInstrucciones', 'whatsapp', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('pagoInstrucciones').isString() && newData.child('pagoInstrucciones').val().length <= 500 && newData.child('whatsapp').isString() && newData.child('whatsapp').val().length >= 10 && newData.child('whatsapp').val().length <= 15 && newData.child('activa').val() == true && newData.child('actualizado').isNumber()",
         "paquetes": {
           "$index": {
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
@@ -17,6 +17,7 @@
         "precio": { ".validate": true },
         "minimo": { ".validate": true },
         "pagoInstrucciones": { ".validate": true },
+        "whatsapp": { ".validate": true },
         "activa": { ".validate": true },
         "actualizado": { ".validate": true },
         "$other": {
@@ -26,7 +27,7 @@
       "borrador": {
         ".read": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
         ".write": "auth != null && auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3'",
-        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'pagoInstrucciones', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('pagoInstrucciones').isString() && newData.child('pagoInstrucciones').val().length <= 500 && newData.child('activa').isBoolean() && newData.child('actualizado').isNumber()",
+        ".validate": "newData.hasChildren(['titulo', 'categoria', 'premios', 'imagen', 'precio', 'minimo', 'paquetes', 'pagoInstrucciones', 'whatsapp', 'activa', 'actualizado']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 70 && newData.child('categoria').isString() && newData.child('premios').isString() && newData.child('premios').val().length <= 500 && newData.child('imagen').isString() && newData.child('precio').isNumber() && newData.child('precio').val() > 0 && newData.child('minimo').isNumber() && newData.child('minimo').val() >= 1 && newData.child('paquetes').hasChildren() && newData.child('pagoInstrucciones').isString() && newData.child('pagoInstrucciones').val().length <= 500 && newData.child('whatsapp').isString() && newData.child('whatsapp').val().length >= 10 && newData.child('whatsapp').val().length <= 15 && newData.child('activa').isBoolean() && newData.child('actualizado').isNumber()",
         "paquetes": {
           "$index": {
             ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
@@ -39,6 +40,7 @@
         "precio": { ".validate": true },
         "minimo": { ".validate": true },
         "pagoInstrucciones": { ".validate": true },
+        "whatsapp": { ".validate": true },
         "activa": { ".validate": true },
         "actualizado": { ".validate": true },
         "$other": {
@@ -59,7 +61,7 @@
         ".read": "auth != null && (auth.uid == $uid || auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3')",
         "$pedido": {
           ".write": "auth != null && (auth.uid == 'b7SQ4D56L1amlycuGInM8mraKPA3' || (auth.uid == $uid && !data.exists() && newData.child('estado').val() == 'pendiente'))",
-          ".validate": "newData.hasChildren(['nombre', 'telefono', 'correo', 'cantidad', 'precioUnitario', 'total', 'estado', 'comprobante', 'creado']) && newData.child('nombre').isString() && newData.child('nombre').val().length > 0 && newData.child('nombre').val().length <= 100 && newData.child('telefono').isString() && newData.child('telefono').val().length <= 30 && newData.child('correo').isString() && newData.child('correo').val().length <= 254 && newData.child('cantidad').isNumber() && newData.child('cantidad').val() >= 1 && newData.child('cantidad').val() <= 50 && newData.child('precioUnitario').isNumber() && newData.child('precioUnitario').val() > 0 && newData.child('total').isNumber() && newData.child('total').val() == newData.child('precioUnitario').val() * newData.child('cantidad').val() && newData.child('estado').isString() && (newData.child('estado').val() == 'pendiente' || newData.child('estado').val() == 'procesando' || newData.child('estado').val() == 'aprobado' || newData.child('estado').val() == 'rechazado') && newData.child('comprobante').isString() && newData.child('creado').isNumber()",
+          ".validate": "newData.hasChildren(['nombre', 'telefono', 'correo', 'cantidad', 'precioUnitario', 'total', 'estado', 'comprobante', 'creado']) && newData.child('nombre').isString() && newData.child('nombre').val().length > 0 && newData.child('nombre').val().length <= 100 && newData.child('telefono').isString() && newData.child('telefono').val().length <= 30 && newData.child('correo').isString() && newData.child('correo').val().length <= 254 && newData.child('cantidad').isNumber() && newData.child('cantidad').val() >= 1 && newData.child('cantidad').val() <= 50 && newData.child('precioUnitario').isNumber() && newData.child('precioUnitario').val() == root.child('rifas/activa/precio').val() && newData.child('total').isNumber() && newData.child('total').val() == newData.child('precioUnitario').val() * newData.child('cantidad').val() && newData.child('estado').isString() && (newData.child('estado').val() == 'pendiente' || newData.child('estado').val() == 'procesando' || newData.child('estado').val() == 'aprobado' || newData.child('estado').val() == 'rechazado') && newData.child('comprobante').isString() && newData.child('creado').isNumber()",
           "nombre": { ".validate": true },
           "telefono": { ".validate": true },
           "correo": { ".validate": true },

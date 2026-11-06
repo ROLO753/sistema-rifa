@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         :root {
             color-scheme: dark;
@@ -611,7 +610,11 @@
                             <label for="pago-instrucciones">Instrucciones para pagar por transferencia o depósito</label>
                             <textarea id="pago-instrucciones" name="pagoInstrucciones" maxlength="500" placeholder="Banco, tipo de cuenta, titular y número para recibir el pago"></textarea>
                         </div>
-                        <p class="package-hint">Escribe las cantidades separadas por coma. Los datos de pago se mostrarán públicamente en la página.</p>
+                        <div class="field field-full">
+                            <label for="whatsapp-rifa">WhatsApp para recibir pedidos y comprobantes</label>
+                            <input id="whatsapp-rifa" name="whatsapp" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 18095551234">
+                        </div>
+                        <p class="package-hint">Escribe el número con código de país, solo números (República Dominicana: 1 + código de área + número).</p>
                     </div>
 
                     <div class="editor-actions">
@@ -685,6 +688,8 @@
             const precio = Number(data.get('precio'));
             const minimo = Number(data.get('minimo'));
             const pagoInstrucciones = String(data.get('pagoInstrucciones')).trim();
+            let whatsapp = String(data.get('whatsapp')).replace(/\D/g, '');
+            if (whatsapp.length === 10) whatsapp = `1${whatsapp}`;
             let imagen = '';
 
             if (rawImage) {
@@ -714,8 +719,11 @@
                 minimo > 50 || paquetesUnicos.some((cantidad) => cantidad < minimo || cantidad > 50)) {
                 throw new Error('Indica paquetes de entre la compra mínima y 50 stickers.');
             }
+            if (whatsapp.length < 10 || whatsapp.length > 15) {
+                throw new Error('Escribe el WhatsApp para recibir pedidos con código de país, solo números.');
+            }
 
-            return { titulo, categoria, premios, imagen, precio, minimo, paquetes: paquetesUnicos, pagoInstrucciones };
+            return { titulo, categoria, premios, imagen, precio, minimo, paquetes: paquetesUnicos, pagoInstrucciones, whatsapp };
         }
 
         function renderPreview(raffle) {
@@ -779,6 +787,7 @@
                 ? raffle.paquetes.join(', ')
                 : '3, 5, 10, 25, 50';
             form.elements.pagoInstrucciones.value = raffle.pagoInstrucciones || '';
+            form.elements.whatsapp.value = raffle.whatsapp || '';
             renderPreview(raffle);
         }
 
@@ -810,20 +819,16 @@
                 const proof = document.createElement('button');
                 proof.className = 'secondary-button';
                 proof.type = 'button';
-                proof.textContent = 'Abrir comprobante';
-                proof.addEventListener('click', async () => {
-                    const proofWindow = window.open('about:blank', '_blank');
-                    if (!proofWindow) {
-                        setAdminStatus('Permite las ventanas emergentes para abrir el comprobante.');
+                proof.textContent = 'Contactar por WhatsApp';
+                proof.addEventListener('click', () => {
+                    let phone = String(order.telefono || '').replace(/\D/g, '');
+                    if (phone.length === 10) phone = `1${phone}`;
+                    if (!phone) {
+                        setAdminStatus('Esta solicitud no tiene un teléfono válido para abrir WhatsApp.');
                         return;
                     }
-                    try {
-                        const url = await firebase.storage().ref(order.comprobante).getDownloadURL();
-                        proofWindow.location = url;
-                    } catch (error) {
-                        proofWindow.close();
-                        setAdminStatus(`No se pudo abrir el comprobante: ${error.message}`);
-                    }
+                    const message = `Hola ${order.nombre || ''}, recibí tu solicitud de ${order.cantidad} stickers. Envíame aquí el comprobante de pago para revisarlo.`;
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
                 });
                 card.append(proof);
 

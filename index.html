@@ -9,7 +9,6 @@ HTML
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         :root {
             --bg-main: #0b0d10;
@@ -1018,6 +1017,17 @@ HTML
             border-radius: 12px;
             color: var(--text-gray);
         }
+
+        .whatsapp-link {
+            display: block;
+            padding: 14px;
+            border-radius: 30px;
+            background: #25d366;
+            color: #062b15;
+            font-weight: 900;
+            text-align: center;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -1071,11 +1081,10 @@ HTML
             <input id="participant-phone" name="telefono" type="tel" maxlength="30" autocomplete="tel" required>
             <label for="participant-email">Correo electrónico</label>
             <input id="participant-email" name="correo" type="email" maxlength="254" autocomplete="email" required>
-            <label for="payment-proof">Comprobante (imagen o PDF, máximo 5 MB)</label>
-            <input id="payment-proof" name="comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
             <p id="purchase-total"></p>
-            <button class="btn-participar" id="submit-participation" type="submit">Enviar comprobante</button>
+            <button class="btn-participar" id="submit-participation" type="submit">Continuar por WhatsApp</button>
             <p id="participation-message" class="participation-message" role="status" aria-live="polite"></p>
+            <a id="send-whatsapp" class="whatsapp-link" href="#" target="_blank" rel="noopener" hidden>Enviar solicitud y comprobante por WhatsApp</a>
         </form>
         <div class="my-orders">
             <strong>Mis solicitudes</strong>
@@ -1165,22 +1174,17 @@ HTML
         async function submitParticipation(event) {
             event.preventDefault();
             const button = document.getElementById('submit-participation');
-            const file = participationForm.elements.comprobante.files[0];
             const quantity = Number(packageChoice.value);
-            if (!file || file.size > 5 * 1024 * 1024 ||
-                !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
-                setParticipationMessage('Elige una imagen JPG, PNG, WebP o PDF de máximo 5 MB.', true);
-                return;
-            }
             if (!activeRaffle || !activeRaffle.activa ||
-                !Array.isArray(activeRaffle.paquetes) || !activeRaffle.paquetes.includes(quantity)) {
+                !Array.isArray(activeRaffle.paquetes) || !activeRaffle.paquetes.includes(quantity) ||
+                !/^\d{10,15}$/.test(String(activeRaffle.whatsapp || ''))) {
                 setParticipationMessage('Esta rifa o paquete ya no está disponible. Recarga la página.', true);
                 return;
             }
 
             button.disabled = true;
-            setParticipationMessage('Enviando el comprobante…');
-            let uploadedProof;
+            document.getElementById('send-whatsapp').hidden = true;
+            setParticipationMessage('Guardando tu solicitud…');
             try {
                 let user = auth.currentUser;
                 if (!user) {
@@ -1188,27 +1192,41 @@ HTML
                     user = credential.user;
                 }
                 const orderRef = db.ref(`participaciones/${user.uid}`).push();
-                const extension = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
-                uploadedProof = `comprobantes/${user.uid}/${orderRef.key}/comprobante.${extension}`;
-                await firebase.storage().ref(uploadedProof).put(file, { contentType: file.type });
+                const nombre = participationForm.elements.nombre.value.trim();
+                const telefono = participationForm.elements.telefono.value.trim();
+                const correo = participationForm.elements.correo.value.trim();
+                const total = quantity * Number(activeRaffle.precio);
                 await orderRef.set({
-                    nombre: participationForm.elements.nombre.value.trim(),
-                    telefono: participationForm.elements.telefono.value.trim(),
-                    correo: participationForm.elements.correo.value.trim(),
+                    nombre,
+                    telefono,
+                    correo,
                     cantidad: quantity,
                     precioUnitario: Number(activeRaffle.precio),
-                    total: quantity * Number(activeRaffle.precio),
+                    total,
                     estado: 'pendiente',
-                    comprobante: uploadedProof,
+                    comprobante: 'Se enviará por WhatsApp',
                     creado: Date.now()
                 });
+                const message = [
+                    `Hola, quiero participar en la rifa: ${activeRaffle.titulo}.`,
+                    `Nombre: ${nombre}`,
+                    `Teléfono: ${telefono}`,
+                    `Correo: ${correo}`,
+                    `Cantidad: ${quantity} stickers`,
+                    `Total: RD$${total.toLocaleString('es-DO')}`,
+                    `Solicitud: ${orderRef.key}`,
+                    'Adjunto el comprobante de pago para revisión.'
+                ].join('\n');
+                const whatsappLink = document.getElementById('send-whatsapp');
+                whatsappLink.href = `https://wa.me/${activeRaffle.whatsapp}?text=${encodeURIComponent(message)}`;
+                whatsappLink.hidden = false;
                 participationForm.reset();
                 updatePurchaseTotal();
-                setParticipationMessage('Comprobante enviado. Tus códigos se asignarán cuando el administrador confirme el pago.');
+                setParticipationMessage('Solicitud guardada. Pulsa el botón verde para enviarla por WhatsApp y adjunta allí tu comprobante.');
             } catch (error) {
                 const message = error.code === 'auth/operation-not-allowed'
                     ? 'Hay que activar el acceso anónimo en Firebase Authentication antes de participar.'
-                    : `No se pudo enviar la solicitud: ${error.message}${uploadedProof ? ' El archivo se cargó, pero el pedido no se guardó; avisa al administrador antes de volver a subirlo.' : ''}`;
+                    : `No se pudo guardar la solicitud: ${error.message}`;
                 setParticipationMessage(message, true);
             } finally {
                 button.disabled = false;
